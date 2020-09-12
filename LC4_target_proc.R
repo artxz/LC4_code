@@ -9,18 +9,18 @@
 
 bd_grid <- S2grid
 
-bkgd_eq <- Mollweide(cbind(rep(90,181), seq(-180, 180, by = 2)))
+bkgd_eq <- Mollweide(cbind(rep(90,91), seq(0, 180, by = 2)))
 colnames(bkgd_eq) <- c('xM','yM')
-ii_inpoly <- sp::point.in.polygon(bkgd_eq[,'xM'], bkgd_eq[,'yM'], xy_bd_chull_M[,'xM'], xy_bd_chull_M[,'yM'])
-bkgd_eq <- bkgd_eq[as.logical(ii_inpoly),]
-bkgd_eq_p45 <- Mollweide(cbind(rep(45,181), seq(-180, 180, by = 2)))
+# ii_inpoly <- sp::point.in.polygon(bkgd_eq[,'xM'], bkgd_eq[,'yM'], xy_bd_chull_M[,'xM'], xy_bd_chull_M[,'yM'])
+# bkgd_eq <- bkgd_eq[as.logical(ii_inpoly),]
+bkgd_eq_p45 <- Mollweide(cbind(rep(45,91), seq(0, 180, by = 2)))
 colnames(bkgd_eq_p45) <- c('xM','yM')
-ii_inpoly <- sp::point.in.polygon(bkgd_eq_p45[,'xM'], bkgd_eq_p45[,'yM'], xy_bd_chull_M[,'xM'], xy_bd_chull_M[,'yM'])
-bkgd_eq_p45 <- bkgd_eq_p45[as.logical(ii_inpoly),]
-bkgd_eq_m45 <- Mollweide(cbind(rep(135,181), seq(-180, 180, by = 2)))
+# ii_inpoly <- sp::point.in.polygon(bkgd_eq_p45[,'xM'], bkgd_eq_p45[,'yM'], xy_bd_chull_M[,'xM'], xy_bd_chull_M[,'yM'])
+# bkgd_eq_p45 <- bkgd_eq_p45[as.logical(ii_inpoly),]
+bkgd_eq_m45 <- Mollweide(cbind(rep(135,91), seq(0, 180, by = 2)))
 colnames(bkgd_eq_m45) <- c('xM','yM')
-ii_inpoly <- sp::point.in.polygon(bkgd_eq_m45[,'xM'], bkgd_eq_m45[,'yM'], xy_bd_chull_M[,'xM'], xy_bd_chull_M[,'yM'])
-bkgd_eq_m45 <- bkgd_eq_m45[as.logical(ii_inpoly),]
+# ii_inpoly <- sp::point.in.polygon(bkgd_eq_m45[,'xM'], bkgd_eq_m45[,'yM'], xy_bd_chull_M[,'xM'], xy_bd_chull_M[,'yM'])
+# bkgd_eq_m45 <- bkgd_eq_m45[as.logical(ii_inpoly),]
 bkgd_mer <- Mollweide(cbind(seq(0, 180, by = 10), rep(0,19)))
 bkgd_mer_e <- Mollweide(cbind(seq(180, 0, by = -10), rep(90,19)))
 bkgd_mer_ee <- Mollweide(cbind(seq(0, 180, by = 10), rep(180,19)))
@@ -96,20 +96,27 @@ for (j in 1:length(neu_target)) {
     labs(title = mat_names[j]) +
     coord_fixed(ratio = 1)
   
-  for (k in 1:length(neu)) {
-    plvl[[j]] <- plvl[[j]] +
-      annotate("text", x = xy_com[[k]]['xM'], y = xy_com[[k]]['yM'], label = conn_target[[j]][k,"tofrom_glu"])
-  }
+  # for (k in 1:length(neu)) {
+  #   plvl[[j]] <- plvl[[j]] +
+  #     annotate("text", x = xy_com[[k]]['xM'], y = xy_com[[k]]['yM'], label = conn_target[[j]][k,"tofrom_glu"])
+  # }
 }
 
 # FIG
-dev.new()
+windows(width = 8, height = 8)
+# postscript(file="RF_DNp02.eps",paper="special",width=8,height=8,horizontal=F)
+# pdf(file = "RF_DNp02.pdf", width = 8, height = 8,pointsize=12,family="Helvetica", useDingbats = F)
 plvl[[1]] 
-dev.new()
+dev.off()
+# ggsave("RF_DNp02.eps")
+windows(width = 8, height = 8)
+# postscript(file="RF_DNp11.eps",paper="special",width=8,height=8,horizontal=F)
 plvl[[2]] 
-dev.new()
+dev.off()
+windows(width = 8, height = 8)
+# postscript(file="RF_DNp04.eps",paper="special",width=8,height=8,horizontal=F)
 plvl[[3]] 
-
+dev.off()
 
 # # plot syn num at com
 # for (j in 1:2) {
@@ -322,8 +329,11 @@ for (m in 1:3) {
   df <- as.data.frame(cbind(x,y))
   pla[[m]] <- ggplot(df, aes(x,y)) +
     geom_line(colour = m) +
-    ylim(0, 4) +
-    labs(title = target_names[m])
+    # ylim(0, 4) +
+    # labs(title = target_names[m])
+    ylim(-0.5, 3) +
+    theme_minimal()+
+    labs(title = paste("azim,", target_names[m], sep = '') )
 }
 
 
@@ -340,7 +350,8 @@ for (m in 1:3) {
   df <- as.data.frame(cbind(x,y))
   ple[[m]] <- ggplot(df, aes(x,y)) +
     geom_line(colour = m) +
-    ylim(0, 3) +
+    ylim(-0.5, 3) +
+    theme_minimal()+
     labs(title = paste("corr elev, ", target_names[m], sep = ''))
 }
 
@@ -348,9 +359,12 @@ for (m in 1:3) {
 pl <- c(pla, ple)
 
 windows(record = F, width = 9, height = 6)
+# postscript(file="DNp_resp.eps",paper="special",width=8,height=8,horizontal=F)
 plot_grid(pl[[1]], pl[[2]], pl[[3]],
           pl[[4]], pl[[5]], pl[[6]],
           nrow = 2)
+
+dev.off()
 
 
 

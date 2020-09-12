@@ -553,6 +553,8 @@ xy_bd <- matrix(ncol = 2)
 bd_grid <- expand.grid(bd_phi, bd_theta) 
 
 windows(record = F, width = 8, height = 8)
+# pdf(file = "stim_LC4.pdf", width = 8, height = 8,pointsize=12,family="Helvetica", useDingbats = F)
+# postscript(file="stim_LC4_equi.eps",paper="special",width=8,height=8,horizontal=F)
 plot(bd_grid, ylim = rev(range(bd_grid)), type = "n", axes = T, ann = F, asp = 1)
 for (j in 1: (length(xy_poly)) ) {
   xy_bd <- rbind(xy_bd, xy_poly[[j]][,c('phi_deg', 'theta_deg')])
@@ -560,20 +562,20 @@ for (j in 1: (length(xy_poly)) ) {
     polygon(xy_poly[[j]][,c('phi_deg', 'theta_deg')], col = "#d7191c", density = 20, angle = j*2, lwd = 2)
     points(xy_com[[j]][c('phi_deg')], xy_com[[j]][c('theta_deg')], col="blue", cex = 3, pch = 3)
     # points(xy_com[[j]][c('phi_deg')], xy_com[[j]][c('theta_deg')], col="blue", cex = 2, pch = 20) #pch=1 circle, 32+j ASCII
-    text(x = xy_com[[j]]['phi_deg'], y = xy_com[[j]]['theta_deg'], label = LC4_grid_N[j], pos = 2, offset = 0.2)
+    # text(x = xy_com[[j]]['phi_deg'], y = xy_com[[j]]['theta_deg'], label = LC4_grid_N[j], pos = 2, offset = 0.2)
   }
   else if (j == landmk[2]) {
     polygon(xy_poly[[j]][,c('phi_deg', 'theta_deg')], col = "#2c7bb6", density = 20, angle = j*2, lwd = 2)
     points(xy_com[[j]][c('phi_deg')], xy_com[[j]][c('theta_deg')], col="blue", cex = 3, pch = 3)
     # points(xy_com[[j]][c('phi_deg')], xy_com[[j]][c('theta_deg')], col="blue", cex = 2, pch = 20) #pch=1 circle, 32+j ASCII
-    text(x = xy_com[[j]]['phi_deg'], y = xy_com[[j]]['theta_deg'], label = LC4_grid_N[j], pos = 2, offset = 0.2)
+    # text(x = xy_com[[j]]['phi_deg'], y = xy_com[[j]]['theta_deg'], label = LC4_grid_N[j], pos = 2, offset = 0.2)
   }
   else {
     # polygon(xy_poly[[j]][,c('phi_deg', 'theta_deg')], col = "grey", border = 'black', density = 10, angle = j*2, lwd = 2)
     points(xy_com[[j]][c('phi_deg')], xy_com[[j]][c('theta_deg')], col="blue", cex = 2, pch = 20) #pch=1 circle, 32+j ASCII
     # text(xy_com[[j]][c('phi_deg')], xy_com[[j]][c('theta_deg')], labels = paste(j), pos = 2, offset = 0.2)
     # text(x = xy_com[[j]]['phi_deg'], y = xy_com[[j]]['theta_deg'], label = conn_target[[1]][j,"tofrom_glu"], pos = 2, offset = 0.2)
-    text(x = xy_com[[j]]['phi_deg'], y = xy_com[[j]]['theta_deg'], label = LC4_grid_N[j], pos = 2, offset = 0.2)
+    # text(x = xy_com[[j]]['phi_deg'], y = xy_com[[j]]['theta_deg'], label = LC4_grid_N[j], pos = 2, offset = 0.2)
   }
 }
 # for (j in 1:length(stim_poly)) {
@@ -605,6 +607,8 @@ lines(rbind(c(-12,90), c(162,90)), lwd = 3)
 text(-17, 90, labels = "equator", pos = 1, offset = 0, srt = 90)
 title("stim and LC4, equirectangular, Mollweide grid num, stim grid num ~ 696 +/-2.5")
 
+dev.off()
+
 # lines(rbind(c(10,180), c(19,180)), lwd = 3)
 # text(20, 180, labels = expression(paste("9",degree)), pos = 1, offset = 0.3)
 # lines(rbind(c(10,180), c(10,171)), lwd = 3)
@@ -622,22 +626,24 @@ bd_grid <- bkgd_grid
 xy_bd_M <- matrix(ncol = 2)
 
 windows(record = F, width = 8, height = 8)
+# pdf(file = "stim_LC4_Mollweid.pdf", width=8, height=8,pointsize=12,family="Helvetica", useDingbats = F)
+# postscript(file="stim_LC4_Mollweid.eps",paper="special",width=8,height=8,horizontal=F)
 plot(bd_grid, ylim = rev(range(bd_grid[,'yM'])), type = "n", axes = T, ann = F, asp = 1)
 for (j in 1: (length(xy_poly)) ) {
   xy_bd_M <- rbind(xy_bd_M, xy_poly[[j]][,c('xM', 'yM')])
   if (j == landmk[[1]]) {
     polygon(xy_poly[[j]][,c('xM', 'yM')], col = "#d7191c", density = 20, angle = j*2, lwd = 2)
     points(xy_com[[j]][c('xM')], xy_com[[j]][c('yN')], col="blue", cex = 3, pch = 3)
-    text(x = xy_com[[j]]['yM'], y = xy_com[[j]]['yM'], label = LC4_grid_N[j], pos = 2, offset = 0.2)
+    # text(x = xy_com[[j]]['yM'], y = xy_com[[j]]['yM'], label = LC4_grid_N[j], pos = 2, offset = 0.2)
   }
   else if (j == landmk[2]) {
     polygon(xy_poly[[j]][,c('xM', 'yM')], col = "#2c7bb6", density = 20, angle = j*2, lwd = 2)
     points(xy_com[[j]][c('xM')], xy_com[[j]][c('yM')], col="blue", cex = 3, pch = 3)
-    text(x = xy_com[[j]]['xM'], y = xy_com[[j]]['yM'], label = LC4_grid_N[j], pos = 2, offset = 0.2)
+    # text(x = xy_com[[j]]['xM'], y = xy_com[[j]]['yM'], label = LC4_grid_N[j], pos = 2, offset = 0.2)
   }
   else {
     points(xy_com[[j]][c('xM')], xy_com[[j]][c('yM')], col="blue", cex = 2, pch = 20) #pch=1 circle, 32+j ASCII
-    text(x = xy_com[[j]]['xM'], y = xy_com[[j]]['yM'], label = LC4_grid_N[j], pos = 2, offset = 0.2)
+    # text(x = xy_com[[j]]['xM'], y = xy_com[[j]]['yM'], label = LC4_grid_N[j], pos = 2, offset = 0.2)
   }
 }
 # for (j in 1:length(stim_poly)) {
@@ -661,7 +667,7 @@ xy_bd_chull_M <- xy_bd_M[hpts_M,] # hull edge points
 colnames(xy_bd_chull_M) <- c('xM', 'yM')
 polygon(xy_bd_chull_M[, c('xM', 'yM')])
 
-
+dev.off()
 
 #  Eyal plot ------------------------------------------------------------------------------------------------------
 
