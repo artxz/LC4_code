@@ -629,20 +629,23 @@ windows(record = F, width = 8, height = 8)
 # pdf(file = "stim_LC4_Mollweid.pdf", width=8, height=8,pointsize=12,family="Helvetica", useDingbats = F)
 # postscript(file="stim_LC4_Mollweid.eps",paper="special",width=8,height=8,horizontal=F)
 plot(bd_grid, ylim = rev(range(bd_grid[,'yM'])), type = "n", axes = T, ann = F, asp = 1)
-for (j in 1: (length(xy_poly)) ) {
+for (j in 1:(length(xy_poly)) ) {
   xy_bd_M <- rbind(xy_bd_M, xy_poly[[j]][,c('xM', 'yM')])
   if (j == landmk[[1]]) {
-    polygon(xy_poly[[j]][,c('xM', 'yM')], col = "#d7191c", density = 20, angle = j*2, lwd = 2)
-    points(xy_com[[j]][c('xM')], xy_com[[j]][c('yN')], col="blue", cex = 3, pch = 3)
-    # text(x = xy_com[[j]]['yM'], y = xy_com[[j]]['yM'], label = LC4_grid_N[j], pos = 2, offset = 0.2)
+    # polygon(xy_poly[[j]][,c('xM', 'yM')], col = "#d7191c", density = 20, angle = j*2, lwd = 2)
+    polygon(xy_poly[[j]][,c('xM', 'yM')], border = "#d7191c", density=NULL, lwd = 2)
+    points(xy_com[[j]][c('xM')], xy_com[[j]][c('yM')], col="#d7191c", cex = 2, pch = 16)
+    text(x = xy_com[[j]]['xM'], y = xy_com[[j]]['yM'], label = LC4_grid_N[j], pos = 2, offset = 0.2)
   }
   else if (j == landmk[2]) {
-    polygon(xy_poly[[j]][,c('xM', 'yM')], col = "#2c7bb6", density = 20, angle = j*2, lwd = 2)
-    points(xy_com[[j]][c('xM')], xy_com[[j]][c('yM')], col="blue", cex = 3, pch = 3)
-    # text(x = xy_com[[j]]['xM'], y = xy_com[[j]]['yM'], label = LC4_grid_N[j], pos = 2, offset = 0.2)
+    # polygon(xy_poly[[j]][,c('xM', 'yM')], col = "#2c7bb6", density = 20, angle = j*2, lwd = 2)
+    polygon(xy_poly[[j]][,c('xM', 'yM')], border = "#2c7bb6",density=NULL, lwd = 2)
+    # points(xy_com[[j]][c('xM')], xy_com[[j]][c('yM')], col="blue", cex = 2, pch = 3)
+    points(xy_com[[j]][c('xM')], xy_com[[j]][c('yM')], col="#2c7bb6", cex = 2, pch = 16)
+    text(x = xy_com[[j]]['xM'], y = xy_com[[j]]['yM'], label = LC4_grid_N[j], pos = 2, offset = 0.2)
   }
   else {
-    points(xy_com[[j]][c('xM')], xy_com[[j]][c('yM')], col="blue", cex = 2, pch = 20) #pch=1 circle, 32+j ASCII
+    points(xy_com[[j]][c('xM')], xy_com[[j]][c('yM')], col="black", cex = 1, pch = 16) #pch=1 circle, 32+j ASCII
     # text(x = xy_com[[j]]['xM'], y = xy_com[[j]]['yM'], label = LC4_grid_N[j], pos = 2, offset = 0.2)
   }
 }

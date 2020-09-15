@@ -315,7 +315,9 @@ plot_grid(plvl_stim[[m]][[13]],
 
 
 
-# -- sum up stim to comp with exp
+
+
+# - sum up stim to comp with exp
 # azim
 x <- c(32.5, 45, 57.5, 70)
 pla <- list()
