@@ -44,7 +44,7 @@ xygrid <- setNames(data.frame(xygrid), c('X', 'Y'));
 valfit <- predict(fitlm, xygrid) #generate values from the fit
 xyz_lm <- cbind(xygrid, valfit)
 dist_min <- apply(xyz_lm, 1, function(pt) {min(rowSums(sweep(dend_v, 2, pt) ^ 2))}) #calculate min distance
-# ii <- dist_min > 20e6 # old
+ii <- dist_min > 20e6 # old
 # xyz_layer_20e6 <- xyz_lm[!ii,] # pts
 valfit_sup <- valfit
 valfit_sup[ii] <- NA
@@ -55,16 +55,25 @@ xyz_layer <- xyz_lm[ii,] # pts
 
 
 # use dendrite alpha mesh as constraint on grid points
-msh.a <- ashape3d(dend_v, alpha = 20000) # 20000 looks ok
+msh.a <- ashape3d(dend_v, alpha = 50000, pert = T, eps = 1e-9) # 20000 looks ok
 msh <- as.mesh3d(msh.a)
-xyz_layer <- xyz_lm[pointsinside(xyz_lm, msh),] # has some holes, but ok
+# xyz <- t(msh$vb[1:3,])[c(msh$it),]
+# msh.a2 <- ashape3d(xyz + matrix((runif(prod(dim(xyz)), 0, 1) - 0.5), ncol = 3), alpha = 50000, pert = F) # coarsing 
+# msh <- as.mesh3d(msh.a2)
+# msh.a2 <- ashape3d(t(msh$vb[1:3,])[c(msh$it),], alpha = 50000, pert = T) 
+# msh <- as.mesh3d(msh.a2)
+
+# xyz_layer <- xyz_lm[pointsinside(xyz_lm, msh),] # has some holes, but ok
+xyz_layer <- xyz_lm[pointsinside(xyz_lm, msh.a),] # use this
 
 # PLOT, PAPER,3d neurons
 nopen3d()
 # points3d(dend_v, color = "brown", size = 5)
 # points3d(xyz_lm, color = "grey", size = 2)
-points3d(xyz_layer, color = "blue", alpha = 0.3, size = 1)
-plot3d(neu,  col= 'grey', soma=T, WithNodes = F)
+points3d(xyz_layer, color = "blue", alpha = 0.3, size = 5)
+# plot3d(neu,  col= 'grey', soma=T, WithNodes = F)
+shade3d(msh, alpha=.2)
+points3d(t(msh$vb[1:3,])[c(msh$it),], size = 10)
 # for (j in 1:length(neu)) {
 #   text3d(colMeans(LC4_dend[[j]]), texts = paste(j))
 # }
@@ -447,15 +456,15 @@ for (j in 1:dim(stim_grid)[1]) {
   stim_poly[[j]] <- cbind(stim_poly[[j]], xyMollweide)
 }
 
-# # DEBUG
-# nopen3d()
-# spheres3d(0,0,0,1, col='grey', alpha=0.2)
-# planes3d(0,0,1, 0, alpha = 0.2)
-# planes3d(0,1,0, 0, alpha = 0.2)
-# points3d(stim_grid[,3:5])
-# points3d(disk_grid[,3:5], col = 'blue')
-# points3d(t(Ry %*% t(disk_grid[,3:5])), col = 'blue')
-# points3d(disk_grid[,3:5] %*% t(Ry), col = 'blue')
+# DEBUG
+nopen3d()
+spheres3d(0,0,0,1, col='grey', alpha=0.2)
+planes3d(0,0,1, 0, alpha = 0.2)
+planes3d(0,1,0, 0, alpha = 0.2)
+points3d(stim_grid[,3:5])
+points3d(disk_grid[,3:5], col = 'blue')
+points3d(t(Ry %*% t(disk_grid[,3:5])), col = 'blue')
+points3d(disk_grid[,3:5] %*% t(Ry), col = 'blue')
 
 
 
@@ -607,7 +616,7 @@ lines(rbind(c(-12,90), c(162,90)), lwd = 3)
 text(-17, 90, labels = "equator", pos = 1, offset = 0, srt = 90)
 title("stim and LC4, equirectangular, Mollweide grid num, stim grid num ~ 696 +/-2.5")
 
-dev.off()
+# dev.off()
 
 # lines(rbind(c(10,180), c(19,180)), lwd = 3)
 # text(20, 180, labels = expression(paste("9",degree)), pos = 1, offset = 0.3)
@@ -670,7 +679,7 @@ xy_bd_chull_M <- xy_bd_M[hpts_M,] # hull edge points
 colnames(xy_bd_chull_M) <- c('xM', 'yM')
 polygon(xy_bd_chull_M[, c('xM', 'yM')])
 
-dev.off()
+# dev.off()
 
 #  Eyal plot ------------------------------------------------------------------------------------------------------
 

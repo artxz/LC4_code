@@ -36,7 +36,7 @@ simdata_df <- list()
 # for (j in 1:length(conn_target)) {
 #   LC4_tar_median[[j]] <- (quantile(conn_target[[j]]$tofrom_glu, c(0.0)))
 # }
-mat_names <- c('DNp02', 'DNp11', 'DNp04')
+mat_names <- c('DNp01', 'DNp02', 'DNp11', 'DNp04')
 
 
 for (j in 1:length(neu_target)) {
@@ -107,16 +107,19 @@ windows(width = 8, height = 8)
 # postscript(file="RF_DNp02.eps",paper="special",width=8,height=8,horizontal=F)
 # pdf(file = "RF_DNp02.pdf", width = 8, height = 8,pointsize=12,family="Helvetica", useDingbats = F)
 plvl[[1]] 
-dev.off()
+# dev.off()
 # ggsave("RF_DNp02.eps")
 windows(width = 8, height = 8)
 # postscript(file="RF_DNp11.eps",paper="special",width=8,height=8,horizontal=F)
 plvl[[2]] 
-dev.off()
+# dev.off()
 windows(width = 8, height = 8)
 # postscript(file="RF_DNp04.eps",paper="special",width=8,height=8,horizontal=F)
 plvl[[3]] 
-dev.off()
+# dev.off()
+windows(width = 8, height = 8)
+# postscript(file="RF_DNp04.eps",paper="special",width=8,height=8,horizontal=F)
+plvl[[4]] 
 
 # # plot syn num at com
 # for (j in 1:2) {
@@ -171,7 +174,7 @@ colnames(bkgd_mer) <- c('xM','yM')
 
 # PLOT,  Gaussian around each com with synap# as height,  cp data via binning
 ii_inpoly <- sp::point.in.polygon(bd_grid[,'xM'], bd_grid[,'yM'], xy_bd_chull_M[,'xM'], xy_bd_chull_M[,'yM'])
-target_names <- c('DNp02', 'DNp11', 'DNp04')
+target_names <- c('DNp01', 'DNp02', 'DNp11', 'DNp04')
 stim_names <- seq(1,length(stim_poly))
 
 n_lvl <- 11

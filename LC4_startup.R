@@ -155,10 +155,11 @@ LC4 <- neu
 
 
 # - load target neuron
+target_01 <-  read.neuron.catmaid(skid = 4947529, .progress='text') #RHS GF
 target_02 <-  read.neuron.catmaid(catmaid_skids("annotation:^putative DNp02$"), .progress='text')
 target_11 <-  read.neuron.catmaid(catmaid_skids("annotation:^putative DNp11$"), .progress='text')
 target_04 <-  read.neuron.catmaid(catmaid_skids("annotation:^putative DNp04$"), .progress='text')
-neu_target <- list(target_02, target_11, target_04)
+neu_target <- list(target_01, target_02, target_11, target_04)
 
 # TM5
 neu_JSON <- fromJSON(file = "data/Tm5_LC6 mapping.json")
