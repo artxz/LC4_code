@@ -13,7 +13,7 @@ library(cowplot)
 library(RColorBrewer)
 library(alphahull)
 
-setwd("C:/Users/zhaoa/Dropbox (HHMI)/sync_userA/Documents/ReiserGroup/p_LC4/LC4_code")
+# setwd("C:/Users/zhaoa/Dropbox (HHMI)/sync_userA/Documents/ReiserGroup/p_LC4/LC4_code")
 
 # clean everythign up.  
 rm(list=ls())
@@ -64,10 +64,32 @@ quaternion3D <- function(vr, ang){
   return(R)
 }
 
-# - fun to generate polygon from set of points
+# - fun to generate polygon from set of points, v2
 mkpoly <- function(xy) {
-  # xy <- xy_pj[[j]]$ashape[[k]]$edges
+  # first step, separate into connected groups
   xy <- as.data.frame(xy)[,1:6]
+  xy_2 <- xy
+  
+  # remove singlet
+  ind_edge <- c(as.matrix(xy[, 1:2]))
+  ind_u <- unique(ind_edge)
+  ind_s <- ind_u[sapply(ind_u, function(x) sum(ind_edge %in% x)) == 1]
+  while (length(ind_s) > 0) {
+    for (j in ind_s) {
+      ind_m <- match(j, xy[,1])
+      if (!is.na(ind_m)) {
+        xy <- xy[-ind_m,]
+      } else {
+        ind_m <- match(j, xy[,2])
+        xy <- xy[-ind_m,]
+      }
+    }
+    # search singlet again
+    ind_edge <- c(as.matrix(xy[, 1:2]))
+    ind_u <- unique(ind_edge)
+    ind_s <- ind_u[sapply(ind_u, function(x) sum(ind_edge %in% x)) == 1]
+  }
+  
   xyset <- list() # vertices for a list of polygons
   if (dim(xy)[1] > 2) {
     # xy is of [x0 y0 x1 y1]
@@ -87,6 +109,7 @@ mkpoly <- function(xy) {
         xyset[[N]] <- rbind(xyset[[N]], xytmp)
         xy <- xy[-ii[2], ]
       } else {
+        # xyset[[N]] <- xyset[[N]][,3:4] 
         N <- N + 1
         xyset[[N]] <- xy[1, ]
         xy <- xy[-1, ]
@@ -155,20 +178,45 @@ LC4 <- neu
 
 
 # - load target neuron
-target_01 <-  read.neuron.catmaid(skid = 4947529, .progress='text') #RHS GF
-target_02 <-  read.neuron.catmaid(catmaid_skids("annotation:^putative DNp02$"), .progress='text')
-target_11 <-  read.neuron.catmaid(catmaid_skids("annotation:^putative DNp11$"), .progress='text')
-target_04 <-  read.neuron.catmaid(catmaid_skids("annotation:^putative DNp04$"), .progress='text')
-neu_target <- list(target_01, target_02, target_11, target_04)
+target_01 <-  read.neurons.catmaid(skid = 4947529, .progress='text') #RHS GF
+target_02 <-  read.neurons.catmaid(catmaid_skids("annotation:^putative DNp02$"), .progress='text')
+target_11 <-  read.neurons.catmaid(catmaid_skids("annotation:^putative DNp11$"), .progress='text')
+target_04 <-  read.neurons.catmaid(catmaid_skids("annotation:^putative DNp04$"), .progress='text')
+neu_target <- c(target_01, target_02, target_11, target_04)
 
-# TM5
-neu_JSON <- fromJSON(file = "data/Tm5_LC6 mapping.json")
-neu_skid <- c()
-for (j in 1:length(neu_JSON)) {
-  neu_skid[j] <- neu_JSON[[j]]$skeleton_id
-}
-TM5 = read.neurons.catmaid(neu_skid, .progress='text')
+# # TM5
+# neu_JSON <- fromJSON(file = "data/Tm5_LC6 mapping.json")
+# neu_skid <- c()
+# for (j in 1:length(neu_JSON)) {
+#   neu_skid[j] <- neu_JSON[[j]]$skeleton_id
+# }
+# TM5 = read.neurons.catmaid(neu_skid, .progress='text')
 
+# new center
+TM5 = read.neurons.catmaid(c(13622778, 13622662), .progress='text')
+
+# nopen3d()
+# points3d(xyz_layer, color = "blue", alpha = 0.7, size = 1)
+# 
+# tar <- TM5[[2]]
+# ii <- identify3d(xyzmatrix(tar$d))
+# points3d(xyzmatrix(tar$d[ii,]), size = 20)
+# 
+# catmaid_get_labels(treenodes = tar$d[ii, 'PointNo'])
+# 
+# ii = match(tar$tags$"TM5 LO col", tar$d$PointNo)
+# catmaid_remove_labels(node = tar$d[ii, 'PointNo'], labels = 'TM5 LO col')
+# 
+# catmaid_set_labels(node = tar$d[ii, 'PointNo'], labels = 'TM5 LO col')
+
+# coord axes --------------------------------------------------------------
+
+# from FAFB
+axis_ori <- c(350e3, 350e3, 250e3)
+
+axis_lat <- c(-10000, 0, 0) #green
+axis_dor <- c(0, -10000, 0)
+axis_post <- c(0, 0, 10000)
 
 
 # palette ---------------------------------------------------------------------------------------------------------
@@ -188,9 +236,11 @@ a1 = -0.95; b1 = 0.74; c1 = 2.1; d1 = -180000 #separate LO and glomerulus
 # nopen3d()
 # plot3d(neu, col = 'grey')
 # planes3d(a1, b1, c1, d1)
+# plot3d(target_01, col = 'red', lwd = 2)
 # plot3d(target_02, col = 'red', lwd = 2)
-# plot3d(target_04, col= 'blue', lwd = 2)
 # plot3d(target_11, col = 'brown', lwd = 2)
+# plot3d(target_04, col= 'blue', lwd = 2)
+
 
 conn_target <- list()
 for (j in 1:length(neu_target)) {
@@ -201,7 +251,8 @@ for (j in 1:length(neu_target)) {
       fromto_LO <- 0
       fromto_glu <- 0
     } else {
-      mat_conn <- data.matrix(conn_fromto[, c("connector_x", "connector_y", "connector_z")])
+      # mat_conn <- data.matrix(conn_fromto[, c("connector_x", "connector_y", "connector_z")])
+      mat_conn <- data.matrix(conn_fromto[, c("post_node_x", "post_node_y", "post_node_z")])
       fromto_LO <- sum(mat_conn %*% c(a1, b1, c1) + d1 > 0)
       fromto_glu <- dim(conn_fromto)[1] - fromto_LO
     }
@@ -210,7 +261,7 @@ for (j in 1:length(neu_target)) {
       tofrom_LO <- 0
       tofrom_glu <- 0
     } else {
-      mat_conn <- data.matrix(conn_tofrom[, c("connector_x", "connector_y", "connector_z")])
+      mat_conn <- data.matrix(conn_tofrom[, c("post_node_x", "post_node_y", "post_node_z")])
       tofrom_LO <- sum(mat_conn %*% c(a1, b1, c1) + d1 > 0)
       tofrom_glu <- dim(conn_tofrom)[1] - tofrom_LO
     }
@@ -227,7 +278,7 @@ for (j in 1:length(neu_target)) {
   for (k in 1:length(neu_target)) {
     conn_fromto <- catmaid_get_connectors_between(pre_skids = neu_target[[j]]$skid, post_skids = neu_target[[k]]$skid)
     if (!is.null(conn_fromto)) {
-      mat_conn <- data.matrix(conn_fromto[, c("connector_x", "connector_y", "connector_z")])
+      mat_conn <- data.matrix(conn_fromto[, c("post_node_x", "post_node_y", "post_node_z")])
       fromto <- dim(conn_fromto)[1]
       conn_tt[j,k] <- fromto
     }

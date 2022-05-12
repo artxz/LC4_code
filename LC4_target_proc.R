@@ -66,16 +66,14 @@ for (j in 1:length(neu_target)) {
   simdata_df[[j]]$equalSpace <- cut(simdata_df[[j]]$z, seq(0,max(simdata_df[[j]]$z),length.out = n_lvl))
   
   
-  plvl[[j]] <-
-    ggplot(simdata_df[[j]], aes(x, y)) + 
+  plvl[[j]] <- ggplot(simdata_df[[j]], aes(x, y)) + 
     # geom_tile(aes(fill = z)) +
     # geom_point()
     # geom_raster(data = simdata_df[[j]], aes(x, y, fill = equalSpace), interpolate = F) +
     geom_tile(aes(fill = equalSpace), height = 0.025, width = 0.025) +
     # geom_tile(data = simdata_df[[j]][simdata_df[[j]]$z > 0.8, ], aes(x, y, fill = equalSpace), size = 3) +
     scale_y_reverse() +
-    scale_fill_manual(values = pal_tar, guide_legend("synp den"),
-                      labels = paste(seq(0.1,1,length.out = 10))) +
+    scale_fill_manual(values = pal_tar, guide_legend("synp den"),labels = paste(seq(0.1,1,length.out = 10))) +
     # geom_segment(aes(x = -11, y = 180, xend = -2, yend = 180), size=2, lineend = "round") +
     # annotate("text", x = -5, y = 185, label = "9?") +
     # geom_segment(aes(x = -11, y = 180, xend = -11, yend = 171), size=2, lineend = "round") +
@@ -96,30 +94,35 @@ for (j in 1:length(neu_target)) {
     labs(title = mat_names[j]) +
     coord_fixed(ratio = 1)
   
-  # for (k in 1:length(neu)) {
-  #   plvl[[j]] <- plvl[[j]] +
-  #     annotate("text", x = xy_com[[k]]['xM'], y = xy_com[[k]]['yM'], label = conn_target[[j]][k,"tofrom_glu"])
-  # }
+  # add conn num
+  for (k in 1:length(neu)) {
+    plvl[[j]] <- plvl[[j]] +
+      annotate("text", x = xy_com[[k]]['xM'], y = xy_com[[k]]['yM'], label = conn_target[[j]][k,"tofrom_glu"])
+  }
 }
 
 # FIG
 windows(width = 8, height = 8)
-# postscript(file="RF_DNp02.eps",paper="special",width=8,height=8,horizontal=F)
-# pdf(file = "RF_DNp02.pdf", width = 8, height = 8,pointsize=12,family="Helvetica", useDingbats = F)
+# postscript(file="RF_DNp01.eps",paper="special",width=8,height=8,horizontal=F)
+# pdf(file = "RF_DNp01.pdf", width = 8, height = 8,pointsize=12,family="Helvetica", useDingbats = F)
 plvl[[1]] 
-# dev.off()
+dev.off()
 # ggsave("RF_DNp02.eps")
 windows(width = 8, height = 8)
-# postscript(file="RF_DNp11.eps",paper="special",width=8,height=8,horizontal=F)
+# postscript(file="RF_DNp02.eps",paper="special",width=8,height=8,horizontal=F)
+# pdf(file = "RF_DNp02.pdf", width = 8, height = 8,pointsize=12,family="Helvetica", useDingbats = F)
 plvl[[2]] 
-# dev.off()
+dev.off()
 windows(width = 8, height = 8)
-# postscript(file="RF_DNp04.eps",paper="special",width=8,height=8,horizontal=F)
+# postscript(file="RF_DNp11.eps",paper="special",width=8,height=8,horizontal=F)
+# pdf(file = "RF_DNp11.pdf", width = 8, height = 8,pointsize=12,family="Helvetica", useDingbats = F)
 plvl[[3]] 
-# dev.off()
+dev.off()
 windows(width = 8, height = 8)
 # postscript(file="RF_DNp04.eps",paper="special",width=8,height=8,horizontal=F)
+# pdf(file = "RF_DNp04.pdf", width = 8, height = 8,pointsize=12,family="Helvetica", useDingbats = F)
 plvl[[4]] 
+dev.off()
 
 # # plot syn num at com
 # for (j in 1:2) {
@@ -172,7 +175,7 @@ bkgd_mer_ee <- Mollweide(cbind(seq(0, 180, by = 10), rep(180,19)))
 bkgd_mer <- rbind(bkgd_mer,bkgd_mer_e,bkgd_mer_ee)
 colnames(bkgd_mer) <- c('xM','yM')
 
-# PLOT,  Gaussian around each com with synap# as height,  cp data via binning
+# FIG,  Gaussian around each com with synap# as height,  cp data via binning
 ii_inpoly <- sp::point.in.polygon(bd_grid[,'xM'], bd_grid[,'yM'], xy_bd_chull_M[,'xM'], xy_bd_chull_M[,'yM'])
 target_names <- c('DNp01', 'DNp02', 'DNp11', 'DNp04')
 stim_names <- seq(1,length(stim_poly))
@@ -187,7 +190,7 @@ stim_max_r <- c()
 Avalue <- list()
 for (m in 1:length(neu_target)) {
   simdata_df <- list()
-  AA <- c()
+  AA <- c() #integrated response over eye
   
   for (j in 1:length(stim_poly)) {
     
@@ -208,10 +211,9 @@ for (m in 1:length(neu_target)) {
       if (A > 0) {
         nn <- c(nn, k)
         grid_Gaussian$arcL <- apply(grid_Gaussian, 1, function(x) arcLength(tp0, x[1:2]/180*pi) )
-        grid_Gaussian$Z <- apply(grid_Gaussian, 1, function(x) x[6] + 1*A*exp(-x[5]^2 / (darc^2*LC4_grid_N[[k]]/pi/log(10)*2)) )
+        grid_Gaussian$Z <- apply(grid_Gaussian, 1, function(x) x['Z'] + 1*A*exp(-1/2 * x['arcL']^2 / (darc^2*LC4_grid_N[[k]]/pi/log(10))) )
       }
     }
-    
     
     # ### ###
     # # - winner takes all
@@ -230,7 +232,6 @@ for (m in 1:length(neu_target)) {
     #   grid_Gaussian$Z <- apply(grid_Gaussian, 1, function(x) x[6] + 1*A*exp(-x[5]^2 / (darc^2*LC4_grid_N[[k]]/pi/log(10)*2)) )
     # }
     
-    
     simdata_df[[j]] <- as.data.frame(grid_Gaussian[, c('xM','yM','Z')])
     AA <- c(AA, sum(simdata_df[[j]]$Z))
     colnames(simdata_df[[j]]) <- c("x","y","z")
@@ -240,7 +241,7 @@ for (m in 1:length(neu_target)) {
   # stim_max_r <- c(stim_max_r, max( unlist((lapply(simdata_df_stim[[m]], function(x) max(x$z)))) ) )
 }
 
-
+# plot
 for (m in 1:length(neu_target)) {
   stim_max <- max( unlist((lapply(simdata_df_stim[[m]], function(x) max(x$z)))) )
   plvl <- list()
@@ -249,17 +250,17 @@ for (m in 1:length(neu_target)) {
     simdata_df_stim[[m]][[j]]$z <- simdata_df_stim[[m]][[j]]$z / stim_max
     simdata_df_stim[[m]][[j]]$equalSpace <- cut(simdata_df_stim[[m]][[j]]$z, seq(0,1,length.out = n_lvl))
     
-    plvl[[j]] <- 
-      ggplot(simdata_df_stim[[m]][[j]], aes(x, y)) + 
-      geom_tile(aes(fill = equalSpace), height = 0.025, width = 0.025) +
+    plvl[[j]] <- ggplot() +
+      geom_tile(data=simdata_df_stim[[m]][[j]], aes(x, y, fill = equalSpace), height = 0.025, width = 0.025) +
       scale_y_reverse() +
       scale_fill_manual(values = pal_tar, guide_legend("synp den"),
                         labels = paste(seq(0.1,1,length.out = 10))) +
-      geom_path(data = as.data.frame(bkgd_mer), aes(x=xM, y=yM), colour = 'grey50') +
-      geom_path(data = as.data.frame(bkgd_eq_m45), aes(x=xM, y=yM), colour = 'grey50') +
+      geom_polygon(data=as.data.frame(stim_poly[[j]]), aes(xM,yM), colour ="gray30", fill=NA, lwd =0.5) +
       # geom_polygon(data = as.data.frame(xy_bd_chull_M), aes(xM, yM))
-      geom_path(data = as.data.frame(bkgd_eq_p45), aes(x=xM, y=yM), colour = 'grey50') +
-      geom_path(data = as.data.frame(bkgd_eq), aes(x=xM, y=yM), colour = 'grey50') +
+      geom_path(data = as.data.frame(bkgd_mer), aes(x=xM, y=yM), colour = 'grey50', alpha=0.5) +
+      geom_path(data = as.data.frame(bkgd_eq_m45), aes(x=xM, y=yM), colour = 'grey50', alpha=0.5) +
+      geom_path(data = as.data.frame(bkgd_eq_p45), aes(x=xM, y=yM), colour = 'grey50', alpha=0.5) +
+      geom_path(data = as.data.frame(bkgd_eq), aes(x=xM, y=yM), colour = 'grey50', alpha=0.5) +
       theme_void() +
       theme(legend.position="none") +
       labs(title = stim_names[j]) +
@@ -272,7 +273,7 @@ for (m in 1:length(neu_target)) {
     # }
   }
   plvl[[1]] <- plvl[[1]] + labs(title = paste(target_names[m], "azim sweep", sep = ','))
-  plvl[[13]] <- plvl[[13]] + labs(title = paste(target_names[m], "elev sweep", sep = ','))
+  plvl[[3*length(stim_azim)+1]] <- plvl[[3*length(stim_azim)+1]] + labs(title = paste(target_names[m], "elev sweep", sep = ','))
   plvl_stim[[m]] <- plvl
 }
 
@@ -283,94 +284,210 @@ for (m in 1:length(neu_target)) {
 # dev.new()
 # plvl[[2]] 
 
-m <- 3
-windows(record = F, width = 12, height = 9)
-plot_grid(plvl_stim[[m]][[1]],
-          plvl_stim[[m]][[4]],
-          plvl_stim[[m]][[7]],
-          plvl_stim[[m]][[10]],
-          plvl_stim[[m]][[2]],
-          plvl_stim[[m]][[5]],
-          plvl_stim[[m]][[8]],
-          plvl_stim[[m]][[11]],
-          plvl_stim[[m]][[3]],
-          plvl_stim[[m]][[6]],
-          plvl_stim[[m]][[9]],          
-          plvl_stim[[m]][[12]],
-          nrow = 3)
-windows(record = F, width = 9, height = 15)
-plot_grid(plvl_stim[[m]][[13]],
-          plvl_stim[[m]][[14]],
-          plvl_stim[[m]][[15]],
-          plvl_stim[[m]][[16]],
-          plvl_stim[[m]][[17]],
-          plvl_stim[[m]][[18]],
-          plvl_stim[[m]][[19]],
-          plvl_stim[[m]][[20]],
-          plvl_stim[[m]][[21]],
-          plvl_stim[[m]][[22]],
-          plvl_stim[[m]][[23]],          
-          plvl_stim[[m]][[24]],
-          plvl_stim[[m]][[25]],
-          plvl_stim[[m]][[26]],
-          plvl_stim[[m]][[27]],
-          nrow = 5)
+m <- 4
+windows(width = 12, height = 9)
+# pdf(file = paste("RF_", mat_names[m], "_azim.pdf", sep=''), width = 12, height = 9,pointsize=12,family="Helvetica", useDingbats = F)
+plot_grid(plotlist = plvl_stim[[m]][1:(3*length(stim_azim))], nrow= 3, byrow= F)
+dev.off()
 
+windows(width = 9, height =15)
+# pdf(file = paste("RF_", mat_names[m], "_elev.pdf", sep=''), width = 8, height = 8,pointsize=12,family="Helvetica", useDingbats = F)
+plot_grid(plotlist = plvl_stim[[m]][(3*length(stim_azim)+1):length(stim_poly)], nrow= 5)
+dev.off()
+
+# # postscript(file=paste("RF_", mat_names[m], "_azim.eps", sep='') ,paper="special",width=8,height=8,horizontal=F)
+# windows(record = F, width = 12, height = 9)
+# # pdf(file = paste("RF_", mat_names[m], "_azim.pdf", sep=''), width = 8, height = 8,pointsize=12,family="Helvetica", useDingbats = F)
+# plot_grid(plvl_stim[[m]][[1]],
+#           plvl_stim[[m]][[4]],
+#           plvl_stim[[m]][[7]],
+#           plvl_stim[[m]][[10]],
+#           plvl_stim[[m]][[2]],
+#           plvl_stim[[m]][[5]],
+#           plvl_stim[[m]][[8]],
+#           plvl_stim[[m]][[11]],
+#           plvl_stim[[m]][[3]],
+#           plvl_stim[[m]][[6]],
+#           plvl_stim[[m]][[9]],          
+#           plvl_stim[[m]][[12]],
+#           nrow = 3)
+# dev.off()
+# 
+# # postscript(file=paste("RF_", mat_names[m], "_elev.eps", sep='') ,paper="special",width=8,height=8,horizontal=F)
+# windows(record = F, width = 9, height = 15)
+# # pdf(file = paste("RF_", mat_names[m], "_elev.pdf", sep=''), width = 8, height = 8,pointsize=12,family="Helvetica", useDingbats = F)
+# plot_grid(plvl_stim[[m]][[13]],
+#           plvl_stim[[m]][[14]],
+#           plvl_stim[[m]][[15]],
+#           plvl_stim[[m]][[16]],
+#           plvl_stim[[m]][[17]],
+#           plvl_stim[[m]][[18]],
+#           plvl_stim[[m]][[19]],
+#           plvl_stim[[m]][[20]],
+#           plvl_stim[[m]][[21]],
+#           plvl_stim[[m]][[22]],
+#           plvl_stim[[m]][[23]],          
+#           plvl_stim[[m]][[24]],
+#           plvl_stim[[m]][[25]],
+#           plvl_stim[[m]][[26]],
+#           plvl_stim[[m]][[27]],
+#           nrow = 5)
+# dev.off()
 
 
 
 
 # - sum up stim to comp with exp
+pal_ephy <- c(rgb(254,95,224,maxColorValue = 255),
+              rgb(255,0,0,maxColorValue = 255),
+              rgb(0,0,255,maxColorValue = 255),
+              rgb(143,57,229,maxColorValue = 255))
+# # azim
+# x <- c(32.5, 45, 57.5, 70)
+# pla <- list()
+# for (m in 1:length(neu_target)) {
+#   y <- c(sum(Avalue[[m]][1:3]),
+#          sum(Avalue[[m]][4:6]),
+#          sum(Avalue[[m]][7:9]),
+#          sum(Avalue[[m]][10:12]) )
+#   y <- y / y[1]
+#   # yrange <- range(y)
+#   df <- as.data.frame(cbind(x,y))
+#   pla[[m]] <- ggplot(df, aes(x,y)) +
+#     geom_line(colour = pal_ephy[m], lwd=2) +
+#     # ylim(0, 4) +
+#     # labs(title = target_names[m])
+#     coord_cartesian(ylim = c(0, 3)) +
+#     theme(panel.background = element_blank(), 
+#           axis.line = element_line(color='black')) +
+#     labs(title = paste("azim,", target_names[m], sep = '') )
+# }
+# 
+# 
+# # elev
+# x <- rev(c(-25, -12.5, 0, 12.5, 25)) #reversed elev def
+# ple <- list()
+# for (m in 1:length(neu_target)) {
+#   y <- c(sum(Avalue[[m]][13:15]),
+#          sum(Avalue[[m]][16:18]),
+#          sum(Avalue[[m]][19:21]),
+#          sum(Avalue[[m]][22:24]),
+#          sum(Avalue[[m]][25:27]))
+#   y <- y / tail(y,1)
+#   df <- as.data.frame(cbind(x,y))
+#   ple[[m]] <- ggplot(df, aes(x,y)) +
+#     geom_line(colour = pal_ephy[m], lwd=2) +
+#     theme(panel.background = element_blank(), 
+#           axis.line = element_line(color='black')) +
+#     coord_cartesian(ylim = c(0, 3)) +
+#     labs(title = paste("elev, ", target_names[m], sep = ''))
+# }
+
 # azim
-x <- c(32.5, 45, 57.5, 70)
+x <- stim_azim
 pla <- list()
-for (m in 1:3) {
-  y <- c(sum(Avalue[[m]][1:3]),
-         sum(Avalue[[m]][4:6]),
-         sum(Avalue[[m]][7:9]),
-         sum(Avalue[[m]][10:12]) )
-  y <- y / y[1]
+for (m in 1:length(neu_target)) {
+  y <- c()
+  for (j in 1:length(stim_azim)) {
+    y <- c(y, sum(Avalue[[m]][(3*j-2):(3*j)]))
+  }
+  y <- y / y[match(32.5, stim_azim)]
   # yrange <- range(y)
   df <- as.data.frame(cbind(x,y))
   pla[[m]] <- ggplot(df, aes(x,y)) +
-    geom_line(colour = m) +
+    geom_line(colour = pal_ephy[m], lwd=2) +
     # ylim(0, 4) +
     # labs(title = target_names[m])
-    ylim(-0.5, 3) +
-    theme_minimal()+
+    coord_cartesian(ylim = c(0, max(3, ceiling(df$y)))) +
+    scale_x_continuous(name = "angle [deg]", breaks = x, labels = x) +
+    # coord_cartesian(ylim = c(0, 3)) +
+    theme(panel.background = element_blank(), 
+          axis.line = element_line(color='black'))+
+          # axis.text.x = element_text(angle=45) ) +
     labs(title = paste("azim,", target_names[m], sep = '') )
 }
 
 
 # elev
 x <- rev(c(-25, -12.5, 0, 12.5, 25)) #reversed elev def
+# x <- stim_elev
 ple <- list()
-for (m in 1:3) {
-  y <- c(sum(Avalue[[m]][13:15]),
-         sum(Avalue[[m]][16:18]),
-         sum(Avalue[[m]][19:21]),
-         sum(Avalue[[m]][22:24]),
-         sum(Avalue[[m]][25:27]))
-  y <- y / tail(y,1)
+for (m in 1:length(neu_target)) {
+  y <- c()
+  for (j in (length(stim_azim)+1):length(c(stim_azim,stim_elev))) {
+    y <- c(y, sum(Avalue[[m]][(3*j-2):(3*j)]))
+  }
+  y <- y / y[5]
   df <- as.data.frame(cbind(x,y))
   ple[[m]] <- ggplot(df, aes(x,y)) +
-    geom_line(colour = m) +
-    ylim(-0.5, 3) +
-    theme_minimal()+
-    labs(title = paste("corr elev, ", target_names[m], sep = ''))
+    geom_line(colour = pal_ephy[m], lwd=2) +
+    theme(panel.background = element_blank(), 
+          axis.line = element_line(color='black')) +
+    coord_cartesian(ylim = c(0, 3)) +
+    scale_x_continuous(name = "angle [deg]", breaks = x, labels = x) +
+    labs(title = paste("elev, ", target_names[m], sep = ''))
 }
-
 
 pl <- c(pla, ple)
 
-windows(record = F, width = 9, height = 6)
+windows(record = F, width = 15, height = 6)
 # postscript(file="DNp_resp.eps",paper="special",width=8,height=8,horizontal=F)
-plot_grid(pl[[1]], pl[[2]], pl[[3]],
-          pl[[4]], pl[[5]], pl[[6]],
+# pdf(file= "DNp_resp.pdf", width = 15, height =6,pointsize=12,family="Helvetica", useDingbats = F)
+plot_grid(pl[[1]], pl[[2]], pl[[3]], pl[[4]],
+          pl[[5]], pl[[6]], pl[[7]], pl[[8]],
           nrow = 2)
 
 dev.off()
 
+
+# -- overlay plot azim sweep
+windows(width = 12, height =8)
+# pdf(file= "DNp_azim_extended.pdf", width = 12, height =8,pointsize=12,family="Helvetica", useDingbats = F)
+x <- stim_azim
+for (m in 1:length(neu_target)) {
+  y <- c()
+  for (j in 1:length(stim_azim)) {
+    y <- c(y, sum(Avalue[[m]][(3*j-2):(3*j)]))
+  }
+  y <- y / y[match(32.5, stim_azim)]
+  # yrange <- range(y)
+  if (m == 1 ) {
+    plot(x, y, type = 'l', col=pal_ephy[m], xlim = range(x), ylim = c(0,6.5), xaxt="n", yaxt="n")
+  } else {
+    points(x, y, type = 'l', col=pal_ephy[m], xaxt="n", yaxt="n")
+  }
+  axis(side=1, at=x, labels = paste(x, "°", sep = ''))
+  axis(side=2, at=seq(0,6), labels = seq(0,6))
+}
+dev.off()
+
+# SAVE data as csv
+x <- stim_azim
+df <- x
+for (m in 1:length(neu_target)) {
+  y <- c()
+  for (j in 1:length(stim_azim)) {
+    y <- c(y, sum(Avalue[[m]][(3*j-2):(3*j)]))
+  }
+  y <- y / y[match(32.5, stim_azim)]
+  # yrange <- range(y)
+  df <- cbind(df,y)
+}
+colnames(df) <- c('azim','DNp01','DNp02','DNp11','DNp04')
+# write.csv(df, "azim_sweep.csv", row.names=F)
+
+x <- rev(c(-25, -12.5, 0, 12.5, 25)) #reversed elev def
+df <- x
+for (m in 1:length(neu_target)) {
+  y <- c()
+  for (j in (length(stim_azim)+1):length(c(stim_azim,stim_elev))) {
+    y <- c(y, sum(Avalue[[m]][(3*j-2):(3*j)]))
+  }
+  y <- y / y[5]
+  df <- cbind(df,y)
+}
+colnames(df) <- c('elev','DNp01','DNp02','DNp11','DNp04')
+# write.csv(df, "elev_sweep.csv", row.names=F)
 
 
 # old equirectangular ---------------------------------------------------------------------------------------------
@@ -524,7 +641,7 @@ for (j in 1:2) {
 
 
 
-#  stim RF, Gaussian around each com with (synap# x stim overlap) as height,   ----------------------------------------
+# old? stim RF, Gaussian around each com with (synap# x stim overlap) as height,   ----------------------------------------
 
 
 ii_inpoly <- sp::point.in.polygon(bd_grid[,1], bd_grid[,2], xy_bd_chull[,'phi_deg'], xy_bd_chull[,'theta_deg'])

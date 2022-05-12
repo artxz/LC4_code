@@ -17,6 +17,12 @@ for (j in 1:length(LC4)) {
 }
 dend_v <- dend_v[-1,]
 
+# make alpha mesh
+msh.a <- ashape3d(dend_v, alpha = 20000, pert = T) # 20000 look ok
+msh <- as.mesh3d(msh.a)
+neu_lo <- nlapply(neu, subset, function(x) pointsinside(x, msh))
+
+
 # # --- least sq fit
 # xyz_fit <- dend_v
 # xyz_fit2 <- xyz_fit^2
@@ -85,10 +91,25 @@ plot3d(neu[[landmk[2]]],  col= 'green', lwd = 4, soma=T, WithNodes = F)
 # points3d(conn_LC4[,c('x','y','z')], color = "cyan", alpha = 1, size = 5)
 # rgl.viewpoint(theta = 45, phi = 180)
 
-# PLOT,pt used for surf fit
+# FIG ,pt used for surf fit
 nopen3d()
-points3d(xyz_layer, color = "blue", alpha = 0.7, size = 1)
-points3d(dend_v, size = 2, col = 'pink')
+par3d('windowRect' = c(10,10,1710,1710))
+points3d(xyz_layer, color = "#fdae61", alpha = 0.9, size = 2)
+# points3d(dend_v, size = 2, col = 'gray90')
+plot3d(neu[-landmk], col='gray90', soma = T, lwd=1, WithNodes = F)
+plot3d(neu[[landmk[1]]],  col= "#d7191c", lwd = 5, soma=T, WithNodes = F)
+plot3d(neu[[landmk[2]]],  col= "#2c7bb6", lwd = 5, soma=T, WithNodes = F)
+plot3d(nlapply(TM5[1], subset, function(x) pointsinside(x, msh,rval='distance')>-1e4), col = 'gold4', lwd = 4) #TM5
+plot3d(nlapply(TM5[2], subset, function(x) pointsinside(x, msh,rval='distance')>-1.2e4), col = 'gold2', lwd = 4) 
+arrow3d(axis_ori, axis_ori + axis_lat, theta = pi/6,n = 4, col="green", type = "rotation")
+arrow3d(axis_ori, axis_ori + axis_dor, theta = pi/6,n = 4, col="magenta", type = "rotation")
+arrow3d(axis_ori, axis_ori + axis_post, theta = pi/6,n = 4, col="blue", type = "rotation")
+rgl.viewpoint(fov=0,zoom=0.8,userMatrix=rotationMatrix(170/180*pi,1,0,0) %*% rotationMatrix(30/180*pi,0,0,1) %*% rotationMatrix(-65/180*pi,0,1,0))
+# plot3d(neu_target, lwd=5)
+
+# # save
+# rgl.snapshot(filename = "LC4_3d.png",fmt = "png")
+
 
 # 2d projections ---------------------------------------------------------------------------------------------
 
@@ -151,10 +172,9 @@ points3d(xyz_layer_rot)
 # grid_u <- which.min(rowSums((sweep(xyz_layer, 2, c(TM5_u), "-"))^2))
 
 ### ###
-# TM5_u_xyz <- xyzmatrix(TM5[[1]]$d[1855,])
-TM5_u_xyz <- xyzmatrix(TM5[[1]]$d[1412,])
-# TM5_c_xyz <- xyzmatrix(TM5[[2]]$d[711,])
-TM5_c_xyz <- xyzmatrix(TM5[[2]]$d[199,])
+TM5_c_xyz <- xyzmatrix(TM5[[1]]$d[match(TM5[[1]]$tags$"TM5 LO col", TM5[[1]]$d$PointNo),])
+TM5_u_xyz <- xyzmatrix(TM5[[2]]$d[match(TM5[[2]]$tags$"TM5 LO col", TM5[[2]]$d$PointNo),])
+
 
 grid_c <- which.min(rowSums((sweep(xyz_layer, 2, c(TM5_c_xyz), "-"))^2))
 grid_u <- which.min(rowSums((sweep(xyz_layer, 2, c(TM5_u_xyz), "-"))^2))
@@ -206,8 +226,8 @@ xy_edge_grid <- xy_grid_ahull # hull edge points
 # DEBUG
 nopen3d()
 points3d(xyz_layer, size = 5)
-points3d(xyz_layer[grid_c,], size = 30, col = 'red')
-points3d(xyz_layer[grid_u,], size = 30, col = 'cyan')
+points3d(xyz_layer[grid_c,], size = 30, col = 'gold4')
+points3d(xyz_layer[grid_u,], size = 30, col = 'gold2')
 points3d(xyz_pj_com[[landmk[1]]], size = 30, col = 'gold')
 points3d(xyz_pj_com[[landmk[2]]], size = 30, col = 'green')
 
@@ -226,16 +246,35 @@ dend_v_align <- sweep(dend_v, 2, layer_pca$center) %*% layer_pca$rotation
 dend_v_align <- sweep(dend_v_align[,c(1,2)], MARGIN = 2, STATS = c(x_med_new, y_eq_new))
 dend_v_align <- t(rot_2 %*% t(dend_v_align))
 
+
+       
 windows(record = F, width = 8, height = 8)
-# pdf('LC6_2d_lo.pdf', width = 8, height = 8, family = "Courier")
+# pdf(file = "LC4_2d.pdf", width = 8, height = 8,pointsize=12,family="Helvetica", useDingbats = F)
 plot(xy_layer_align, col="#fdae61", cex = 1, pch = ".",
      ylim = rev(range(xy_layer_align[,2])),
-     xlim = rev(range(xy_layer_align[,1])),
+     xlim = (range(xy_layer_align[,1])),
      asp = 1, main = "2D proj aligned")
-points(dend_v_align[,1], dend_v_align[,2], col = "grey80", pch = ".", cex = 1)
-points(xy_pj_com[[landmk[1]]][1,1], xy_pj_com[[landmk[1]]][1,2], col = 'gold', cex = 4, pch = 19)
-points(xy_pj_com[[landmk[2]]][1,1], xy_pj_com[[landmk[2]]][1,2], col = 'green', cex = 4, pch = 19)
-lines(rbind(c(0,0), xy_layer_align[grid_u,]*1.5), lwd = 3, col = 'cyan')
+points(dend_v_align, col = "grey80", pch = ".", cex = 1)
+twig <- neu_lo[[landmk[1]]]
+pp <- as.matrix(sweep(twig$d[,c("X","Y","Z")], 2, layer_pca$center)) %*% layer_pca$rotation
+pp <- sweep(pp[,1:2], 2, STATS = c(x_med_new, y_eq_new))
+twig$d[,c("X","Y")] <- sweep(t(rot_2 %*% t(pp)), 2, c(x_med_new, y_eq_new))
+plot(twig,  col= "#d7191c", lwd = 2, soma=T, WithNodes = F, add = T)
+twig <- neu_lo[[landmk[2]]]
+pp <- as.matrix(sweep(twig$d[,c("X","Y","Z")], 2, layer_pca$center)) %*% layer_pca$rotation
+pp <- sweep(pp[,1:2], 2, STATS = c(x_med_new, y_eq_new))
+twig$d[,c("X","Y")] <- sweep(t(rot_2 %*% t(pp)), 2, c(x_med_new, y_eq_new))
+plot(twig,  col= "#2c7bb6", lwd = 2, soma=T, WithNodes = F, add = T)
+# points(xy_pj_com[[landmk[1]]], col = 'gold', cex = 4, pch = 19)
+# points(xy_pj_com[[landmk[2]]], col = 'green', cex = 4, pch = 19)
+lines(rbind(-xy_layer_align[grid_u,]*1.8, xy_layer_align[grid_u,]*1.8), lwd = 3, col = 'cyan')
+points(matrix(c(x_med_new,y_eq_new), ncol =2), pch = 18, col = 'gold4', cex = 2)
+points(matrix(xy_layer_align[grid_u,], ncol=2), pch = 18, col = 'gold2', cex = 2)
+lines(c(50000,60000), c(-70000, -70000), col = 'black', lwd = 3)
+points(matrix(unlist(xy_pj_com), ncol = 2, byrow = T), pch = 20, col = "blue", cex = 1.5)
+text(x = 55000, -65000, labels = "10 µm")
+
+dev.off()
 
 # ng=as.ngraph(neu[[landmk[1]]])
 # distal_points=igraph::graph.dfs(ng, root=1855, unreachable=FALSE, neimode='out')$order
@@ -257,9 +296,9 @@ lines(rbind(c(0,0), xy_layer_align[grid_u,]*1.5), lwd = 3, col = 'cyan')
 # lines(rbind(c(x_med_new,y_eq_new), c(x_med_new,y_eq_new)+(pp-c(x_med_new,y_eq_new))*2), lwd = 3, col = 'cyan')
 # points(matrix(c(x_med_new,y_eq_new), ncol =2), pch = 18, col = 'brown', cex = 2)
 # points(c(x_med_new,y_eq_new)+(pp-c(x_med_new,y_eq_new)), pch = 18, col = 'gold4', cex = 2)
-
-lines(c(-50000,-60000), c(60000, 60000), col = 'black', lwd = 3)
-text(x = -50000, 63000, labels = "10 um")
+# 
+# lines(c(-50000,-60000), c(60000, 60000), col = 'black', lwd = 3)
+# text(x = -50000, 63000, labels = "10 um")
 
 # # DEBUG lo center ----------------------------------------------------------------------------------------------------
 # 
@@ -279,7 +318,9 @@ text(x = -50000, 63000, labels = "10 um")
 # planes3d(0,0,1, 0, alpha = 0.5)
 # 
 # 
-# # -- jet color plot LC4
+
+#  jet color plot LC4 -----------------------------------------------------
+
 # getPalette <- colorRampPalette(brewer.pal(9, "Spectral"))
 # 
 # n <- 3
@@ -391,14 +432,62 @@ grid_bdpt_tp <- grid_bdpt %>%
   data.matrix()
 
 
-# Stimuli ---------------------------------------------------------------------------------------------------------
+# FIG, Figure 5D, in eye coord
+bkgd_eq <- Mollweide(cbind(rep(90,91), seq(0, 180, by = 2)))
+bkgd_eq_p45 <- Mollweide(cbind(rep(45,91), seq(0, 180, by = 2)))
+bkgd_eq_m45 <- Mollweide(cbind(rep(135,91), seq(0, 180, by = 2)))
+bkgd_mer <- Mollweide(cbind(seq(0, 180, by = 10), rep(0,19)))
+bkgd_mer_e <- Mollweide(cbind(seq(180, 0, by = -10), rep(90,19)))
+bkgd_mer_ee <- Mollweide(cbind(seq(0, 180, by = 10), rep(180,19)))
+bkgd_mer <- rbind(bkgd_mer,bkgd_mer_e,bkgd_mer_ee)
 
+windows(record = F, width = 8, height = 8)
+# pdf(file = "LC6 LO.pdf", width = 8, height = 8,pointsize=12,family="Helvetica", useDingbats = F)
+bd_phi <- seq(buchner_phi[1], buchner_phi[2], by = 1)
+bd_theta <- seq(1, 180, by = 1)
+xy_bd <- matrix(ncol = 2)
+bd_grid <- expand.grid(bd_phi, bd_theta)
+plot(bd_grid, ylim = rev(range(bd_grid$Var2)), type = "n", axes = FALSE, ann = F)
+for (j in 1:length(xy_poly)) {
+  xy_bd <- rbind(xy_bd, xy_poly[[j]][,c('phi_deg', 'theta_deg')])
+  if (j == 10) {
+    polygon(xy_poly[[j]][,c('phi_deg', 'theta_deg')], col = "#d7191c", density = 20, angle = j*2, lwd = 2)
+    points(xy_com[[j]][c('phi_deg')], xy_com[[j]][c('theta_deg')], col="blue", cex = 3, pch = 3)
+    points(xy_com[[j]][c('phi_deg')], xy_com[[j]][c('theta_deg')], col="blue", cex = 1.5, pch = 20) #pch=1 circle, 32+j ASCII
+  }
+  else if (j == 51) {
+    polygon(xy_poly[[j]][,c('phi_deg', 'theta_deg')], col = "#2c7bb6", density = 20, angle = j*2, lwd = 2)
+    points(xy_com[[j]][c('phi_deg')], xy_com[[j]][c('theta_deg')], col="blue", cex = 3, pch = 3)
+    points(xy_com[[j]][c('phi_deg')], xy_com[[j]][c('theta_deg')], col="blue", cex = 1.5, pch = 20) #pch=1 circle, 32+j ASCII
+  }
+  else {
+    polygon(xy_poly[[j]][,c('phi_deg', 'theta_deg')], col = "cyan", border = 'black', density = 20, angle = j*2, lwd = 2)
+    points(xy_com[[j]][c('phi_deg')], xy_com[[j]][c('theta_deg')], col="blue", cex = 1.5, pch = 20) #pch=1 circle, 32+j ASCII
+    # text(xy_com[[j]][c('phi_deg')], xy_com[[j]][c('theta_deg')], labels = j, pos = 1, offset = 0.3)
+  }
+}
+xy_bd <- xy_bd[-1,]
+hpts_2 <- chull(xy_bd)
+hpts_2 <- c(hpts_2, hpts_2[1])
+xy_bd_chull <- xy_bd[hpts_2,] # hull edge points
+polygon(xy_bd_chull)
+lines(rbind(c(-11,180), c(-2,180)), lwd = 3)
+text(-5, 180, labels = expression(paste("9",degree)), pos = 1, offset = 0.3)
+lines(rbind(c(-11,180), c(-11,171)), lwd = 3)
+text(-11, 175, labels = expression(paste("9",degree)), pos = 2, offset = 0.2)
+lines(rbind(c(0,0), c(0,180)), lwd = 3) 
+text(0, -5, labels = "front", pos = 1, offset = 0)
+lines(rbind(c(90,0), c(90,180)), lwd = 3)
+text(90, -5, labels = expression(paste("side 90",degree)), pos = 1, offset = 0)
+lines(rbind(c(-12,90), c(162,90)), lwd = 3)
+text(-17, 90, labels = "equator", pos = 1, offset = 0, srt = 90)
+
+dev.off()
+
+# Stimuli ---------------------------------------------------------------------------------------------------------
 
 # -- stim disk
 disk_theta <- 15 # radiuCs in deg
-# disk_theta <- 5 # radius in deg
-# disk_theta <- 7.5 # radius in deg
-# disk_theta <- 10 # radius in deg
 
 disk_phi <- seq(0, 359, by = 10)
 disk_grid <- expand.grid(disk_theta, disk_phi)
@@ -407,9 +496,12 @@ disk_grid %<>% as_tibble() %>%
   mutate(x = sin(theta/180*pi)*cos(phi/180*pi), y = sin(theta/180*pi)*sin(phi/180*pi), z = cos(theta/180*pi)) %>%
   data.matrix()
 
-# stim position
-stim_azim <- c(32.5, 45, 57.5, 70) # radius in deg
+# stim positions
+# stim_azim <- c(32.5, 45, 57.5, 70) # radius in deg
 stim_elev <- c(-25, -12.5, 0, 12.5, 25) + 90
+stim_azim <- seq(7.5, 157.5, by = 12.5) # radius in deg
+# stim_elev <- seq(-87.5, 87.5, by = 12.5) + 90
+
 stim_3 <- c(-30,0,30) 
 stim_grid_azim <- expand.grid(stim_3 + 90, stim_azim)
 colnames(stim_grid_azim) <- c('theta', 'phi')
@@ -419,6 +511,17 @@ colnames(stim_grid_elev) <- c('theta', 'phi')
 stim_grid <- rbind(stim_grid_azim, stim_grid_elev)
 stim_grid %<>% as_tibble() %>%
   mutate(x = sin(theta/180*pi)*cos(phi/180*pi), y = sin(theta/180*pi)*sin(phi/180*pi), z = cos(theta/180*pi)) %>%
+  data.matrix()
+
+# add 20-deg pitch
+stim_grid_orig <- stim_grid
+ang <- 20/180*pi
+Ry <- matrix(c(cos(ang), 0 , sin(ang),
+               0, 1, 0,
+               -sin(ang), 0, cos(ang)), ncol = 3, byrow = T)
+stim_grid[, c('x','y','z')] <- t(Ry %*% t(stim_grid[, c('x','y','z')]))
+stim_grid %<>% as_tibble() %>%
+  mutate(theta = acos(z)/pi*180, phi = acos(x / sqrt(x^2+y^2))/pi*180) %>%
   data.matrix()
 
 stim_poly <- list()
@@ -467,6 +570,14 @@ points3d(t(Ry %*% t(disk_grid[,3:5])), col = 'blue')
 points3d(disk_grid[,3:5] %*% t(Ry), col = 'blue')
 
 
+# for (j in 1:3) {
+#   points3d(stim_poly[[j]][,c('x','y','z')])
+# }
+# 
+# for (j in (3*length(stim_azim)+19):(3*length(stim_azim)+21)) {
+#   points3d(stim_poly[[j]][,c('x','y','z')])
+# }
+
 
 # S2 area ------------------------------------------------------------------------------------------------------------
 
@@ -500,6 +611,7 @@ bkgd_mer_e <- Mollweide(cbind(seq(0, 180, by = 10), rep(90,19)))
 bkgd_mer_ee <- Mollweide(cbind(seq(0, 180, by = 10), rep(180,19)))
 bkgd_mer_w <- Mollweide(cbind(seq(0, 180, by = 10), rep(-90,19)))
 bkgd_mer_ww <- Mollweide(cbind(seq(0, 180, by = 10), rep(-180,19)))
+
 
 # -- calculate stim LC4 overlap
 stim_LC4_ol <- list()
@@ -551,6 +663,36 @@ for (j in 1:(length(xy_poly))  ) {
 title("LC4_Mollweide")
 
 
+# FIG, LC4 polygons on background grid Mollweide
+dev.new()
+# pdf(file = "LC4 on eye Mollweide.pdf", width = 8, height = 8,pointsize=12,family="Helvetica", useDingbats = F)
+# plot(bkgd_grid, pch = '.', cex = 3)
+plot(bkgd_grid, cex = 0.6, pch='', xlim = c(-0.5, pi), ylim = c(1.5,-1.5))
+# lines(Mollweide(cbind(rep(90,18), seq(0, 180,length.out = 18)))); 
+# lines(Mollweide(cbind(rep(135,18), seq(0, 180,length.out = 18))))
+# lines(Mollweide(cbind(rep(45,18), seq(0, 180,length.out = 18))))
+lines(bkgd_eq); lines(bkgd_eq_m45); lines(bkgd_eq_p45)
+lines(bkgd_mer); lines(bkgd_mer_e); lines(bkgd_mer_ee)
+for (j in 1:length(xy_poly)) {
+  if (j == landmk[1]) {
+    # text(x = xy_com[[j]]['xM'], y = xy_com[[j]]['yM'], label = LC4_grid_N[j], pos = 2, offset = 0.2)
+    polygon(xy_poly[[j]][,c("xM","yM")], col = "#d7191c", density = 20, angle = j*2, lwd = 2)
+    # points(xy_com[[j]]['xM'], xy_com[[j]]['yM'], col="blue", cex = 3, pch = 3)
+    points(xy_com[[j]]['xM'], xy_com[[j]]['yM'], col="blue", cex = 1.5, pch = 20) #pch=1 circle, 32+j ASCII
+  }
+  else if (j == landmk[2]) {
+    polygon(xy_poly[[j]][,c("xM","yM")], col = "#2c7bb6", density = 20, angle = j*2, lwd = 2)
+    # points(xy_com[[j]]['xM'], xy_com[[j]]['yM'], col="blue", cex = 3, pch = 3)
+    points(xy_com[[j]]['xM'], xy_com[[j]]['yM'], col="blue", cex = 1.5, pch = 20) #pch=1 circle, 32+j ASCII
+  }
+  else {
+    polygon(xy_poly[[j]][,c("xM","yM")], col = "gray", border = 'black', density = 20, angle = j*2, lwd = 2)
+    points(xy_com[[j]]['xM'], xy_com[[j]]['yM'], col="blue", cex = 1.5, pch = 20) #pch=1 circle, 32+j ASCII
+    # text(xy_com[[j]][c('phi_deg')], xy_com[[j]][c('theta_deg')], labels = j, pos = 1, offset = 0.3)
+  }
+}
+title("LC4_Mollweide")
+dev.off()
 
 #  FIG, LC4 and stim ----------------------------------------------------------------------------------------------
 
@@ -582,17 +724,20 @@ for (j in 1: (length(xy_poly)) ) {
   else {
     # polygon(xy_poly[[j]][,c('phi_deg', 'theta_deg')], col = "grey", border = 'black', density = 10, angle = j*2, lwd = 2)
     points(xy_com[[j]][c('phi_deg')], xy_com[[j]][c('theta_deg')], col="blue", cex = 2, pch = 20) #pch=1 circle, 32+j ASCII
-    # text(xy_com[[j]][c('phi_deg')], xy_com[[j]][c('theta_deg')], labels = paste(j), pos = 2, offset = 0.2)
+    text(xy_com[[j]][c('phi_deg')], xy_com[[j]][c('theta_deg')], labels = paste(j), pos = 2, offset = 0.2)
     # text(x = xy_com[[j]]['phi_deg'], y = xy_com[[j]]['theta_deg'], label = conn_target[[1]][j,"tofrom_glu"], pos = 2, offset = 0.2)
     # text(x = xy_com[[j]]['phi_deg'], y = xy_com[[j]]['theta_deg'], label = LC4_grid_N[j], pos = 2, offset = 0.2)
   }
 }
 # for (j in 1:length(stim_poly)) {
-for (j in 1:12) { #azim sweep
-  polygon(stim_poly[[j]][,c('phi', 'theta')], col = "green", density = 0, angle = j*2, lwd = 2)
+for (j in 1:(3*length(stim_azim))) { #azim sweep
+# for (j in 1:39) { #azim sweep
+  phithe <- stim_poly[[j]][,c('phi', 'theta')]
+  phithe[,1] <- if_else(phithe[,1]< -90, phithe[,1]+360, phithe[,1])
+  polygon(phithe, col = "green", density = 0, angle = j*2, lwd = 2)
   # text(x = stim_com[[j]]['phi'], y = stim_com[[j]]['theta'], label = stim_grid_N[j], pos = 2, offset = 0.2)
 }
-for (j in 13:27) { #elev sweep
+for (j in (3*length(stim_azim)+1):length(stim_poly)) { #elev sweep
   polygon(stim_poly[[j]][,c('phi', 'theta')], col = "gold", density = 0, angle = j*2, lwd = 2)
 }
 # add boundary
@@ -644,14 +789,14 @@ for (j in 1:(length(xy_poly)) ) {
     # polygon(xy_poly[[j]][,c('xM', 'yM')], col = "#d7191c", density = 20, angle = j*2, lwd = 2)
     polygon(xy_poly[[j]][,c('xM', 'yM')], border = "#d7191c", density=NULL, lwd = 2)
     points(xy_com[[j]][c('xM')], xy_com[[j]][c('yM')], col="#d7191c", cex = 2, pch = 16)
-    text(x = xy_com[[j]]['xM'], y = xy_com[[j]]['yM'], label = LC4_grid_N[j], pos = 2, offset = 0.2)
+    # text(x = xy_com[[j]]['xM'], y = xy_com[[j]]['yM'], label = LC4_grid_N[j], pos = 2, offset = 0.2)
   }
   else if (j == landmk[2]) {
     # polygon(xy_poly[[j]][,c('xM', 'yM')], col = "#2c7bb6", density = 20, angle = j*2, lwd = 2)
     polygon(xy_poly[[j]][,c('xM', 'yM')], border = "#2c7bb6",density=NULL, lwd = 2)
     # points(xy_com[[j]][c('xM')], xy_com[[j]][c('yM')], col="blue", cex = 2, pch = 3)
     points(xy_com[[j]][c('xM')], xy_com[[j]][c('yM')], col="#2c7bb6", cex = 2, pch = 16)
-    text(x = xy_com[[j]]['xM'], y = xy_com[[j]]['yM'], label = LC4_grid_N[j], pos = 2, offset = 0.2)
+    # text(x = xy_com[[j]]['xM'], y = xy_com[[j]]['yM'], label = LC4_grid_N[j], pos = 2, offset = 0.2)
   }
   else {
     points(xy_com[[j]][c('xM')], xy_com[[j]][c('yM')], col="black", cex = 1, pch = 16) #pch=1 circle, 32+j ASCII
@@ -659,11 +804,11 @@ for (j in 1:(length(xy_poly)) ) {
   }
 }
 # for (j in 1:length(stim_poly)) {
-for (j in 1:12) { #azim sweep
+for (j in 1:(3*length(stim_azim))) { #azim sweep
   polygon(stim_poly[[j]][,c('xM', 'yM')], col = "green", density = 0, angle = j*2, lwd = 2)
   # text(x = stim_com[[j]]['phi'], y = stim_com[[j]]['theta'], label = stim_grid_N[j], pos = 2, offset = 0.2)
 }
-for (j in 13:27) { #elev sweep
+for (j in (3*length(stim_azim)+1):length(stim_poly)) { #elev sweep
   polygon(stim_poly[[j]][,c('xM', 'yM')], col = "gold", density = 0, angle = j*2, lwd = 2)
 }
 lines(bkgd_eq); lines(bkgd_eq_m45); lines(bkgd_eq_p45)
