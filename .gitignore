@@ -6,4 +6,4 @@
 .gitignore
 figures
 publish_data.R
-VFB_export_table_LC4_DNp01020411.csv
+*.csv
