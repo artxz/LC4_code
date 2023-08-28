@@ -193,12 +193,14 @@ n_lvl <- 11
 getPalette <- colorRampPalette(RColorBrewer::brewer.pal(9, "Blues"))
 pal_tar <- getPalette(n_lvl - 1)
 
-
+landmk <- c(4,29) #reference LC4
+landmk_col <- c("#d7191c", "#2c7bb6")
 
 # # load neurons from CATMAID server ----------------------------------------
 # 
 # # public server
-# # 
+# # Specify VFB CAMAID server containing data
+# conn=catmaid_login(server="https://fafb.catmaid.virtualflybrain.org/")
 # 
 # # load LC4 neuron using annotation
 # anno_LC4 <- catmaid_query_by_annotation("^putative LC4 neuron$")

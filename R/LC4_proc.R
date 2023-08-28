@@ -40,9 +40,11 @@ valfit <- predict(fitlm, xygrid) #generate values from the fit
 xyz_lm <- cbind(xygrid, valfit)
 
 # keep points inside the lobula mesh
-ii <- pointsinside(xyz_lm, LO_msh,rval='distance') > -3000
-xyz_layer <- xyz_lm[ii,] # pts
+ii <- pointsinside(xyz_lm, LO_msh,rval='distance') > -3000 #for plotting
+xyz_layer_plot <- xyz_lm[ii,] # pts
 
+ii <- pointsinside(xyz_lm, LO_msh,rval='distance') > -3000 #tighter for computing
+xyz_layer <- xyz_lm[ii,] # pts
 
 
 # PLOT, ED Fig.5a
@@ -68,8 +70,7 @@ rgl.viewpoint(fov=0,zoom=0.8,userMatrix=rotationMatrix(170/180*pi,1,0,0) %*% rot
 # project LC4 dendrite and center-of-mass onto the layer grid (ED Fig.5b) -------------
 # Also project the layer grid onto a 2D plane and use TM5 to align it.
 
-# - project onto the layer
-# this takes some time
+# - project onto the layer  ****** THIS IS SLOW ***** 
 row.names(xyz_layer) <-  seq(1, dim(xyz_layer)[1])
 ind_pj <- list() #index of projected grid points
 xyz_com <- list() # center-of-mass
@@ -144,10 +145,10 @@ for (j in 1:length(ind_pj)){
 }
 
 
-# use alpha-hull for the grid projection
-xy_ashape_grid <- ashape(xy_layer_align + matrix(runif(dim(xy_layer_align)[1]*2, 1e-9, 2e-9), ncol = 2), alpha = 6000)
-xy_grid_ahull <- mkpoly(xy_ashape_grid$edges)[[1]][,3:4]
-xy_edge_grid <- xy_grid_ahull # hull edge points
+# # use alpha-hull for the grid projection, -> obs. 
+# xy_ashape_grid <- ashape(xy_layer_align + matrix(runif(dim(xy_layer_align)[1]*2, 1e-9, 2e-9), ncol = 2), alpha = 6000)
+# xy_grid_ahull <- mkpoly(xy_ashape_grid$edges)[[1]][,3:4]
+# xy_edge_grid <- xy_grid_ahull # hull edge points
 
 
 # # check results
@@ -218,7 +219,7 @@ plot3d(neu_target[[n]], col = 'grey', lwd = 1, soma = T)
 
 
 # wrap the lobula layer onto a hemisphere -------------------------------------------------------------------------
-# Model the field of view as a hemisphere and assume lobula maps to it in a uniform fashion
+# Model the field of view as a hemisphere and assume lobula maps onto it in a uniform fashion
 # Imagine the layer grid as an elastic sheet, we wrap it onto a hemisphere.
 # For each point on the layer grid, compute a radial distance (from the
 # pole of the hemisphere to its boundary/equator) proportional to the distance from
@@ -227,10 +228,17 @@ plot3d(neu_target[[n]], col = 'grey', lwd = 1, soma = T)
 # Each LC4's 2D projection has a center-of-mass and a polygon representing its dendrite extent.
 # First get edge points on the polygon.
 xy_poly <- list()
+xy_bdpt <- matrix(ncol = 2, nrow = 0) #collect all LC4 polygon edge points to make a LO boundary
 for (j in 1:length(ind_pj)) {
   ls_poly <- mkpoly(xy_pj[[j]]$ashape$edges)
   xy_poly[[j]] <- ls_poly[[1]][,3:4]
+  xy_bdpt <- rbind(xy_bdpt, xy_pj[[j]]$edge[,3:4])
 }
+
+# use alpha-hull for the grid projection, -> new
+xy_ashape_grid <- ashape(unique(xy_bdpt), alpha = 6000)
+xy_grid_ahull <- mkpoly(xy_ashape_grid$edges)[[1]][,3:4]
+xy_edge_grid <- xy_grid_ahull # hull edge points
 
 grid_bdpt <- xy_edge_grid
 grid_bdpt <- rbind(grid_bdpt, grid_bdpt[1,])
@@ -239,7 +247,7 @@ ymax <- max(xy_edge_grid[,2])
 ymin <- min(xy_edge_grid[,2])
 
 
-# LC4 polygons and centers in eye coordinates
+# LC4 polygons and centers, in eye coordinates
 poly_st <- st_polygon(list(data.matrix(grid_bdpt)))
 xy_ori <- c(0,0)
 R <- (ymax-ymin)*2
@@ -291,7 +299,7 @@ grid_bdpt_tp <- grid_bdpt %>%
   mutate(thetaC = pi/2) %>% #radius
   mutate(x = sin(thetaC)*cos(phiC), y = sin(thetaC)*sin(phiC), z = cos(thetaC)) %>% #(x,y,z) coord
   mutate(xr = x, yr = z, zr = -y) %>% # +90 rotation about x-axis
-  mutate(xrr = xr, yrr = yr, zrr = zr) %>% 
+  mutate(xrr = xr, yrr = yr, zrr = zr) %>% # do nothing
   mutate(theta = acos(zrr/sqrt(xrr^2+yrr^2+zrr^2)), phi = acos(xrr/sqrt(xrr^2+yrr^2))) %>%
   mutate(theta_deg = theta/pi*180/180*diff(buchner_theta)+buchner_theta[1], 
          phi_deg = phi/pi*180/180*diff(buchner_phi)+buchner_phi[1]) %>% # longitude use buchner_phi
@@ -465,11 +473,11 @@ lines(bkgd_eq); lines(bkgd_eq_m45); lines(bkgd_eq_p45)
 lines(bkgd_mer); lines(bkgd_mer_e); lines(bkgd_mer_ee)
 for (j in 1:length(xy_poly)) {
   if (j == landmk[1]) {
-    polygon(xy_poly[[j]][,c("xM","yM")], col = "#d7191c", density = 20, angle = j*2, lwd = 2)
+    polygon(xy_poly[[j]][,c("xM","yM")], col = landmk_col[1], density = 20, angle = j*2, lwd = 2)
     points(xy_com[[j]]['xM'], xy_com[[j]]['yM'], col="blue", cex = 1.5, pch = 20) #pch=1 circle, 32+j ASCII
   }
   else if (j == landmk[2]) {
-    polygon(xy_poly[[j]][,c("xM","yM")], col = "#2c7bb6", density = 20, angle = j*2, lwd = 2)
+    polygon(xy_poly[[j]][,c("xM","yM")], col = landmk_col[2], density = 20, angle = j*2, lwd = 2)
     points(xy_com[[j]]['xM'], xy_com[[j]]['yM'], col="blue", cex = 1.5, pch = 20) #pch=1 circle, 32+j ASCII
   }
   else {
